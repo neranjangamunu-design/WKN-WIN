@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anti-Gravity Commerce</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+</head>
+
+<body>
+    <div id="app">
+        <!-- Navigation -->
+        <nav class="glass-nav">
+            <div class="logo" id="nav-brand">AGStore</div>
+            <div class="nav-center">
+                <button onclick="router.navigate('home')" class="nav-btn active" data-target="home">Store</button>
+            </div>
+            <div class="nav-right">
+                <div class="cart-icon" onclick="toggleCart()">
+                    <i class="ri-shopping-bag-3-line"></i>
+                    <span id="cart-count">0</span>
+                </div>
+                <button onclick="checkAdminAccess()" class="nav-btn admin-btn" data-target="admin" title="Admin Access">
+                    <i class="ri-more-2-fill"></i>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main id="main-content">
+            <!-- Dynamic Content Injected Here -->
+        </main>
+
+        <!-- Cart Sidebar -->
+        <div id="cart-sidebar" class="cart-sidebar">
+            <div class="cart-header">
+                <h3>Your Cart</h3>
+                <button onclick="toggleCart()" class="close-btn"><i class="ri-close-line"></i></button>
+            </div>
+            <div id="cart-items" class="cart-items">
+                <!-- Cart Items -->
+            </div>
+            <div class="cart-footer">
+                <div class="total">Total: <span id="cart-total">$0.00</span></div>
+                <button onclick="openCheckoutModal()" class="checkout-btn">Checkout</button>
+            </div>
+        </div>
+
+        <!-- Overlay -->
+        <div id="overlay" class="overlay" onclick="closeModals()"></div>
+
+        <!-- Checkout Modal -->
+        <div id="checkout-modal" class="modal">
+            <div class="modal-header">
+                <h3>Checkout Details</h3>
+                <button onclick="closeModals()" class="close-btn-modal"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="checkout-form" onsubmit="processCheckout(event)">
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" id="cust-name" required placeholder="Your Name">
+                    </div>
+                    <div class="form-group">
+                        <label>Address (Gama)</label>
+                        <input type="text" id="cust-address" required placeholder="Delivery Address">
+                    </div>
+                    <div class="form-cols">
+                        <div class="form-group">
+                            <label>Phone Number 1</label>
+                            <input type="tel" id="cust-phone1" required placeholder="07x xxxxxxx">
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number 2 (Optional)</label>
+                            <input type="tel" id="cust-phone2" placeholder="07x xxxxxxx">
+                        </div>
+                    </div>
+                    <button type="submit" class="action-btn">Place Order</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Admin Login Modal -->
+        <div id="login-modal" class="modal small-modal">
+            <div class="modal-header">
+                <h3>Admin Access</h3>
+                <button onclick="closeModals()" class="close-btn-modal"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="verifyAdmin(event)">
+                    <div class="form-group">
+                        <input type="password" id="admin-pin" placeholder="Enter PIN" class="center-input" required>
+                    </div>
+                    <button type="submit" class="action-btn">Login</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Review Modal -->
+        <div id="review-modal" class="modal">
+            <div class="modal-header">
+                <h3>Rate & Review</h3>
+                <button onclick="closeModals()" class="close-btn-modal"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="review-form" onsubmit="submitReview(event)">
+                    <input type="hidden" id="review-prod-id">
+                    <div class="form-group">
+                        <label>Your Name</label>
+                        <input type="text" id="review-name" required placeholder="Name">
+                    </div>
+                    <div class="form-group">
+                        <label>Rating</label>
+                        <div class="star-rating-input">
+                            <i class="ri-star-line star-input" data-val="1" onclick="setRating(1)"></i>
+                            <i class="ri-star-line star-input" data-val="2" onclick="setRating(2)"></i>
+                            <i class="ri-star-line star-input" data-val="3" onclick="setRating(3)"></i>
+                            <i class="ri-star-line star-input" data-val="4" onclick="setRating(4)"></i>
+                            <i class="ri-star-line star-input" data-val="5" onclick="setRating(5)"></i>
+                        </div>
+                        <input type="hidden" id="review-rating" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Comment</label>
+                        <textarea id="review-comment" rows="3" placeholder="Share your thoughts..."></textarea>
+                    </div>
+                    <button type="submit" class="action-btn">Submit Review</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Notification Toast -->
+        <div id="toast-container"></div>
+    </div>
+
+    <!-- Templates -->
+    <template id="store-template">
+        <div class="hero">
+            <h1>Elevate Your Style</h1>
+            <p>Experience the anti-gravity collection.</p>
+        </div>
+
+        <!-- Search & Filter Controls -->
+        <div class="store-controls">
+            <div class="search-bar">
+                <i class="ri-search-line"></i>
+                <input type="text" id="store-search" placeholder="Search items..." oninput="renderProducts()">
+            </div>
+            <div class="category-filter">
+                <select id="store-category" onchange="renderProducts()">
+                    <option value="all">All Categories</option>
+                    <!-- Categories injected dynamically -->
+                </select>
+            </div>
+        </div>
+
+        <div class="product-grid" id="product-list">
+            <!-- Products -->
+        </div>
+    </template>
+
+    <template id="admin-template">
+        <div class="admin-dashboard">
+            <div class="admin-header">
+                <h2>Admin Dashboard</h2>
+                <div class="admin-tabs">
+                    <button class="tab-btn active" onclick="adminView('products')">Products</button>
+                    <button class="tab-btn" onclick="adminView('orders')">Orders</button>
+                    <button class="tab-btn" onclick="adminView('settings')">Settings</button>
+                    <button class="tab-btn" onclick="window.open('../POSMINI/index.html', '_blank')"
+                        title="External Networking POS System">Network</button>
+                    <button class="logout-btn" onclick="adminLogout()"><i class="ri-logout-box-r-line"></i></button>
+                </div>
+            </div>
+
+            <div id="admin-products-view" class="admin-view">
+                <div class="add-product-form glass-panel">
+                    <h3>Manage Item</h3>
+                    <form id="product-form" onsubmit="saveProduct(event)">
+                        <div class="form-col-layout">
+                            <div class="form-left">
+                                <div class="file-upload-container"
+                                    onclick="document.getElementById('prod-image').click()">
+                                    <input type="file" id="prod-image" accept="image/*" onchange="previewImage(event)"
+                                        hidden>
+                                    <div id="image-preview" class="image-preview-placeholder">
+                                        <i class="ri-image-add-line"></i>
+                                        <span>Click to Add Image</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-right">
+                                <div class="form-group">
+                                    <input type="text" id="prod-name" placeholder="Item Name" required>
+                                </div>
+                                <div class="form-group">
+                                    <input type="number" id="prod-price" placeholder="Price" required>
+                                </div>
+                                <div class="form-group">
+                                    <input type="number" id="prod-qty" placeholder="Quantity" required>
+                                </div>
+                                <div class="form-group">
+                                    <input type="text" id="prod-cat" placeholder="Category (e.g. Shoes, Tops)"
+                                        list="cat-list">
+                                    <datalist id="cat-list"></datalist>
+                                </div>
+                                <div class="form-group">
+                                    <textarea id="prod-desc" placeholder="Description" rows="2"></textarea>
+                                </div>
+                                <div class="form-cols">
+                                    <div class="form-group">
+                                        <input type="text" id="prod-sizes" placeholder="Sizes (S,M,L)"
+                                            onchange="updateVariantOptions()">
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="text" id="prod-colors" placeholder="Colors (Red,Blue)"
+                                            onchange="updateVariantOptions()">
+                                    </div>
+                                </div>
+
+                                <!-- Variant Image Manager -->
+                                <div class="glass-panel"
+                                    style="padding: 10px; margin-bottom: 15px; border: 1px dashed var(--glass-border);">
+                                    <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: #aaa;">Color-Image Mapping
+                                    </h4>
+                                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                                        <select id="variant-color-select"
+                                            style="padding: 8px; border-radius: 6px; background: #222; color: #fff; border: 1px solid #444;">
+                                            <option value="">Select Color</option>
+                                        </select>
+                                        <button type="button"
+                                            onclick="document.getElementById('variant-image-input').click()"
+                                            style="padding: 8px; cursor: pointer; background: #333; color: white; border: none; border-radius: 6px;">
+                                            <i class="ri-upload-cloud-line"></i> Img
+                                        </button>
+                                        <input type="file" id="variant-image-input" hidden accept="image/*"
+                                            onchange="addVariantImage(event)">
+                                    </div>
+                                    <div id="variant-list" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                        <!-- Variant previews go here -->
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 10px;">
+                                    <button type="submit" id="save-btn" class="action-btn">Add Item</button>
+                                    <button type="button" id="cancel-edit-btn" class="action-btn hidden"
+                                        style="background:#444;" onclick="resetProductForm()">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="admin-search-bar">
+                    <input type="text" id="admin-search" placeholder="Search products..."
+                        oninput="renderAdminProducts()">
+                </div>
+
+                <div class="product-management-list" id="admin-product-list">
+                    <!-- Admin Product List -->
+                </div>
+            </div>
+
+            <div id="admin-orders-view" class="admin-view hidden">
+                <div id="orders-list">
+                    <!-- Orders -->
+                </div>
+            </div>
+
+            <div id="admin-settings-view" class="admin-view hidden">
+                <div class="glass-panel" style="max-width: 500px; margin: 0 auto;">
+                    <h3>Security Settings</h3>
+                    <form onsubmit="changeAdminPin(event)">
+                        <div class="form-group">
+                            <label>Change Admin PIN</label>
+                            <input type="number" id="new-pin" placeholder="Enter New 4-digit PIN" required
+                                class="center-input">
+                        </div>
+                        <p style="font-size: 0.8rem; color: #888; margin-bottom: 20px;">Use this PIN to login to the
+                            Admin Dashboard next time.</p>
+                        <button type="submit" class="action-btn">Update PIN</button>
+                    </form>
+
+                    <h3 style="margin-top: 30px; border-top: 1px solid var(--glass-border); padding-top: 20px;">Store
+                        Appearance</h3>
+                    <form onsubmit="saveAppearanceSettings(event)">
+                        <div class="form-group">
+                            <label>Store Name</label>
+                            <input type="text" id="setting-store-name" placeholder="AGStore">
+                        </div>
+                        <div class="form-group">
+                            <label>Logo URL (Optional)</label>
+                            <input type="text" id="setting-logo-url" placeholder="https://...">
+                        </div>
+                        <button type="submit" class="action-btn">Save Appearance</button>
+                    </form>
+
+                    <h3
+                        style="margin-top: 30px; border-top: 1px solid var(--glass-border); padding-top: 20px; color: #ffae00;">
+                        Save to GitHub (Manual Sync)</h3>
+                    <div class="glass-panel"
+                        style="background: rgba(255,174,0,0.05); border-color: rgba(255,174,0,0.2);">
+                        <p style="font-size: 0.8rem; margin-bottom: 15px;">If you don't use Cloud Sync, you must
+                            download this file and upload it to GitHub to update the site for everyone.</p>
+                        <button onclick="downloadUpdatedAppJs()" class="action-btn"
+                            style="background: #ffae00; color: #000; font-weight: bold;">Download Updated
+                            app.js</button>
+                        <p style="font-size: 0.7rem; margin-top: 10px; color: #888;">After downloading, replace the old
+                            <code>app.js</code> in your GitHub repository.
+                        </p>
+                    </div>
+
+                    <h3
+                        style="margin-top: 30px; border-top: 1px solid var(--glass-border); padding-top: 20px; color: #0088ff;">
+                        Cloud Sync Status</h3>
+                    <div class="glass-panel"
+                        style="background: rgba(0,136,255,0.05); border-color: rgba(0,136,255,0.2);">
+                        <p style="font-size: 0.8rem; margin-bottom: 10px;">Your store is now connected to the Cloud
+                            Database. Updates will sync automatically across all devices.</p>
+                        <p id="cloud-status" style="font-size: 0.8rem; font-weight: bold; color: #00ff88;">Status: 🛰️
+                            Online (Synced)</p>
+                    </div>
+
+                    <h3
+                        style="margin-top: 30px; border-top: 1px solid var(--glass-border); padding-top: 20px; color: var(--danger);">
+                        Maintenance</h3>
+                    <div class="glass-panel" style="background: rgba(255,0,0,0.05); border-color: rgba(255,0,0,0.2);">
+                        <p style="font-size: 0.8rem; margin-bottom: 15px;">If the app feels slow or you can't place
+                            orders, try clearing old order history or reset your browser cache.</p>
+                        <button onclick="clearAllOrders()" class="action-btn" style="background: var(--danger);">Clear
+                            All Order History</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

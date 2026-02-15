@@ -1,0 +1,107 @@
+/* Add these to style.css to support new features */
+
+/* Cart Improvements */
+.cart-item-details h4 {
+    font-size: 1rem;
+    margin-bottom: 2px;
+    color: #fff;
+}
+
+.cart-item-details small {
+    color: #a29bfe;
+}
+
+.cart-qty-controls {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2px;
+}
+
+.cart-qty-controls button {
+    width: 25px;
+    height: 25px;
+    border: none;
+    background: transparent;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 50%;
+}
+
+.cart-qty-controls button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.cart-qty-controls span {
+    margin: 0 8px;
+    font-size: 0.9rem;
+    min-width: 15px;
+    text-align: center;
+}
+
+.delete-btn-icon {
+    background: transparent;
+    border: none;
+    color: #ff7675;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 5px;
+    transition: transform 0.2s;
+}
+
+.delete-btn-icon:hover {
+    transform: scale(1.2);
+    color: #ff5252;
+}
+
+.empty-cart-msg {
+    text-align: center;
+    color: #888;
+    margin-top: 50px;
+}
+
+/* Edit Button in Admin */
+.edit-btn {
+    background: rgba(85, 239, 196, 0.2);
+    color: var(--success);
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+.edit-btn:hover {
+    background: rgba(85, 239, 196, 0.4);
+}
+
+.text-danger {
+    color: var(--danger);
+}
+
+.status-pending {
+    color: var(--danger);
+}
+
+.status-accepted {
+    color: var(--success);
+}
+
+/* Settings View */
+#admin-settings-view {
+    padding-top: 20px;
+}
+
+/* Tab Styling Fixes */
+.admin-tabs .tab-btn:nth-child(3) {
+    border-left: none;
+    /* Middle */
+    border-right: none;
+    border-radius: 0;
+}
+
+.admin-tabs .tab-btn:nth-child(2) {
+    border-radius: 0;
+}

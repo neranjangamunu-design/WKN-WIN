@@ -1,0 +1,10 @@
+/* Clean up extra style.css content if any, and ensure cart styles are solid */
+.cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
