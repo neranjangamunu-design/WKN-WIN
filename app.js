@@ -53,22 +53,39 @@ const state = {
     tempReviewId: null
 };
 
-// Utils
+// Utils with Cloud Feedback
 const saveProducts = () => {
     localStorage.setItem('products', JSON.stringify(state.products));
-    if (firebaseDb) firebaseDb.ref('products').set(state.products);
+    if (firebaseDb) {
+        firebaseDb.ref('products').set(state.products)
+            .catch(e => showToast("Product Sync Failed: " + e.message, "error"));
+    }
 };
 const saveOrders = () => {
     localStorage.setItem('orders', JSON.stringify(state.orders));
-    if (firebaseDb) firebaseDb.ref('orders').set(state.orders);
+    if (firebaseDb) {
+        return firebaseDb.ref('orders').set(state.orders)
+            .then(() => console.log("Orders synced to cloud"))
+            .catch(e => {
+                showToast("Order Cloud Sync Failed!", "error");
+                throw e; // Rethrow to handle in checkout logic
+            });
+    }
+    return Promise.resolve();
 };
 const saveAdminPin = () => {
     localStorage.setItem('adminPin', state.adminPin);
-    if (firebaseDb) firebaseDb.ref('adminPin').set(state.adminPin);
+    if (firebaseDb) {
+        firebaseDb.ref('adminPin').set(state.adminPin)
+            .catch(e => showToast("PIN Sync Failed", "error"));
+    }
 };
 const saveSettings = () => {
     localStorage.setItem('storeSettings', JSON.stringify(state.settings));
-    if (firebaseDb) firebaseDb.ref('settings').set(state.settings);
+    if (firebaseDb) {
+        firebaseDb.ref('settings').set(state.settings)
+            .catch(e => showToast("Settings Sync Failed", "error"));
+    }
 };
 
 // Initial Cloud Load & Sync
@@ -76,15 +93,27 @@ if (firebaseDb) {
     firebaseDb.ref('/').on('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
-            // If Firebase has data, use it to update local state
-            if (data.products) state.products = data.products;
-            if (data.orders) state.orders = data.orders;
+            // Safety: Firebase sometimes returns arrays as objects. Convert them back.
+            if (data.products) {
+                state.products = Array.isArray(data.products) ? data.products : Object.values(data.products);
+            }
+            if (data.orders) {
+                const cloudOrders = Array.isArray(data.orders) ? data.orders : Object.values(data.orders);
+                // Notification for admin if new orders arrive
+                if (cloudOrders.length > state.orders.length && state.isAdminLoggedIn) {
+                    showToast("New Order Received! 🚀", "success");
+                    if (state.currentPage === 'admin' && state.currentAdminTab === 'orders') renderOrders();
+                }
+                state.orders = cloudOrders;
+            }
             if (data.settings) state.settings = data.settings;
             if (data.adminPin) state.adminPin = data.adminPin;
+
             render();
             applySettings();
+            console.log("Cloud Data Synced Successfully");
         } else {
-            // If Firebase is empty (first time), upload current local state to Firebase
+            // First time setup: Push local data to cloud
             saveProducts();
             saveOrders();
             saveAdminPin();
@@ -536,37 +565,30 @@ function processCheckout(e) {
         if (!Array.isArray(state.orders)) state.orders = [];
         state.orders.unshift(newOrder);
 
-        try {
-            saveOrders();
-        } catch (storageErr) {
-            if (storageErr.name === 'QuotaExceededError' || storageErr.code === 22) {
-                console.warn("Storage full, trimming orders...");
-                state.orders = state.orders.slice(0, 20); // Keep only 20 latest
-                saveOrders();
-            } else {
-                throw storageErr;
-            }
-        }
+        // Try to save to Cloud first to ensure it's not just local
+        saveOrders().then(() => {
+            // Inventory Deduct
+            state.cart.forEach(c => {
+                const product = state.products.find(prod => Number(prod.id) === Number(c.id));
+                if (product) {
+                    const deductQty = parseInt(c.qty) || 0;
+                    product.qty -= deductQty;
+                    if (product.qty < 0) product.qty = 0;
+                }
+            });
+            saveProducts();
 
-        // Inventory Deduct
-        state.cart.forEach(c => {
-            const product = state.products.find(prod => Number(prod.id) === Number(c.id));
-            if (product) {
-                const deductQty = parseInt(c.qty) || 0;
-                product.qty -= deductQty;
-                if (product.qty < 0) product.qty = 0;
-            }
+            state.cart = [];
+            updateCartUI();
+            closeModals();
+            showToast('Order Placed Successfully! 🚀', 'success');
+
+            setTimeout(() => {
+                render();
+            }, 100);
+        }).catch(err => {
+            alert("Order could not be sent to Cloud. Please check your internet or Firebase Rules. Error: " + err.message);
         });
-        saveProducts();
-
-        state.cart = [];
-        updateCartUI();
-        closeModals();
-        showToast('Order Placed Successfully!', 'success');
-
-        setTimeout(() => {
-            render();
-        }, 100);
 
     } catch (error) {
         console.error("Checkout Error:", error);
